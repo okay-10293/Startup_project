@@ -1,0 +1,182 @@
+import datetime
+
+class SlowFashionApp:
+    def __init__(self):
+        self.wardrobe = {}
+        self.max_score = 100
+
+    def calculate_eco_score(self):
+        score = self.max_score
+        today = datetime.date.today()
+        
+        for item_name, info in self.wardrobe.items():
+            last_worn = info['date']
+            days_not_worn = (today - last_worn).days
+            
+            if days_not_worn >= 30:
+                extra_days = days_not_worn - 30
+                penalty = 5 + (extra_days // 10)
+                score -= penalty
+                
+        return max(0, score)
+
+    def get_days_not_worn(self, last_worn_date):
+        return (datetime.date.today() - last_worn_date).days
+
+    def input_date(self):
+        while True:
+            try:
+                date_str = input("마지막으로 입은 날짜를 입력하세요 (예: 2026-05-25): ").strip()
+                year, month, day = map(int, date_str.split('-'))
+                return datetime.date(year, month, day)
+            except ValueError:
+                print("❌ 올바른 날짜 형식이 아닙니다! '년-월-일' 형태로 숫자를 정확히 입력해주세요 (예: 2026-01-15).")
+
+    def input_wear_count(self):
+        while True:
+            try:
+                count_str = input("지금까지 이 옷을 몇 번 입었는지 입력하세요: ").strip()
+                count = int(count_str)
+                if count < 0:
+                    print("❌ 횟수는 0보다 작을 수 없습니다.")
+                    continue
+                return count
+            except ValueError:
+                print("❌ 올바른 숫자를 입력해주세요.")
+
+    def wardrobe_menu(self):
+        while True:
+            print("\n" + "="*30)
+            print("🚪 [옷장] 에 들어왔습니다.")
+            print("1. 옷장 보기")
+            print("2. 새로운 옷 추가하기")
+            print("3. 옷 제거하기")
+            print("4. 옷장 나가기 (메인으로)")
+            print("="*30)
+            
+            user_input = input("원하는 작업을 선택하세요: ").strip()
+            
+            if '1' in user_input or '보기' in user_input or '목록' in user_input:
+                self.view_wardrobe()
+            elif '2' in user_input or '추가' in user_input or '등록' in user_input:
+                self.add_clothes()
+            elif '3' in user_input or '제거' in user_input or '삭제' in user_input or '버리기' in user_input:
+                self.remove_clothes()
+            elif '4' in user_input or '나가기' in user_input or '종료' in user_input or '메인' in user_input:
+                print("옷장을 나가 메인 화면으로 돌아갑니다.")
+                break
+            else:
+                print("🤔 어떤 작업을 원하시는지 이해하지 못했어요. 다시 입력해주세요!")
+
+    def view_wardrobe(self):
+        if not self.wardrobe:
+            print("\n옷장이 텅 비어있습니다! 새로운 옷을 추가해보세요.")
+            return
+            
+        print("\n--- 👕 내 옷장 목록 👖 ---")
+        for name, info in self.wardrobe.items():
+            last_worn = info['date']
+            count = info['count']
+            days = self.get_days_not_worn(last_worn)
+            date_formatted = last_worn.strftime("%Y년 %m월 %d일")
+            
+            if days <= 0:
+                print(f"- {name} (누적 착용: {count}회 / 최근 착용일: {date_formatted} / 오늘 입음!)")
+            else:
+                print(f"- {name} (누적 착용: {count}회 / 최근 착용일: {date_formatted} / {days}일 동안 안 입음)")
+        print("--------------------------")
+
+    def add_clothes(self):
+        name = input("\n추가할 옷의 이름을 입력하세요: ").strip()
+        if not name:
+            print("옷 이름을 정확히 입력해주세요.")
+            return
+            
+        if name in self.wardrobe:
+            print("이미 옷장에 있는 옷입니다.")
+            return
+
+        last_worn_date = self.input_date()
+        wear_count = self.input_wear_count()
+        
+        self.wardrobe[name] = {'date': last_worn_date, 'count': wear_count}
+        print(f"✅ '{name}'이(가) 옷장에 추가되었습니다! (마지막 착용일: {last_worn_date.strftime('%Y년 %m월 %d일')} / 착용 횟수: {wear_count}회)")
+
+    def remove_clothes(self):
+        self.view_wardrobe()
+        if not self.wardrobe:
+            return
+            
+        name = input("\n버리거나 나눔할 옷의 이름을 입력하세요: ").strip()
+        if name in self.wardrobe:
+            del self.wardrobe[name]
+            print(f"🗑️ '{name}'을(를) 옷장에서 제거했습니다.")
+        else:
+            print("옷장에 없는 옷입니다. 이름을 다시 확인해주세요.")
+
+    def recommend_clothes(self):
+        if not self.wardrobe:
+            print("\n옷장이 비어있어 추천할 옷이 없습니다. 먼저 옷을 추가해주세요.")
+            return
+
+        sorted_clothes = sorted(
+            self.wardrobe.items(),
+            key=lambda x: self.get_days_not_worn(x[1]['date']),
+            reverse=True
+        )
+
+        oldest_cloth_name, oldest_cloth_info = sorted_clothes[0]
+        days = self.get_days_not_worn(oldest_cloth_info['date'])
+        
+        print("\n" + "*"*30)
+        print("💡 [오늘의 슬로우 패션 추천] 💡")
+        print(f"추천 아이템: '{oldest_cloth_name}'")
+        print(f"이유: 안 입은 지 가장 오래된 옷({days}일 지남)입니다.")
+        print("이 옷을 입어서 환경 점수를 지켜보세요!")
+        print("*"*30)
+
+    def wear_clothes(self):
+        self.view_wardrobe()
+        if not self.wardrobe:
+            return
+            
+        name = input("\n오늘 입을 옷의 이름을 입력하세요: ").strip()
+        if name in self.wardrobe:
+            self.wardrobe[name]['date'] = datetime.date.today()
+            self.wardrobe[name]['count'] += 1
+            print(f"✨ 멋지네요! 오늘 '{name}'을(를) 입었습니다. (마지막 착용일이 오늘로 갱신되고 착용 횟수가 {self.wardrobe[name]['count']}회로 증가했습니다.)")
+        else:
+            print("옷장에 없는 옷입니다. 이름을 다시 확인해주세요.")
+
+    def main_menu(self):
+        while True:
+            eco_score = self.calculate_eco_score()
+            print("\n" + "="*35)
+            print("🌍 [슬로우 패션 메인 화면] 🌍")
+            print(f"🌱 현재 나의 환경 점수: {eco_score} / {self.max_score}점")
+            if eco_score < 100:
+                print("  (경고: 장기간 입지 않은 옷이 있어 점수가 누적 감점되었습니다!)")
+            print("="*35)
+            print("1. 옷장 들어가기")
+            print("2. 오늘 입을 옷 추천받기")
+            print("3. 옷 입기 (기록하기)")
+            print("4. 프로그램 종료")
+            print("="*35)
+            
+            user_input = input("원하는 작업을 선택하세요: ").strip()
+            
+            if '1' in user_input or '옷장' in user_input or '들어가기' in user_input:
+                self.wardrobe_menu()
+            elif '2' in user_input or '추천' in user_input:
+                self.recommend_clothes()
+            elif '3' in user_input or '입기' in user_input or '착용' in user_input:
+                self.wear_clothes()
+            elif '4' in user_input or '종료' in user_input or '나가기' in user_input:
+                print("슬로우 패션 실천을 응원합니다! 프로그램을 종료합니다.")
+                break
+            else:
+                print("🤔 어떤 작업을 원하시는지 이해하지 못했어요. 다시 입력해주세요!")
+
+if __name__ == "__main__":
+    app = SlowFashionApp()
+    app.main_menu()
