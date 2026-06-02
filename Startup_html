@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -174,7 +175,7 @@
     </div>
 
     <div id="recommend-screen" class="screen">
-        <h2>💡 오늘의 슬로우 패션 추천 (최대 2벌)</h2>
+        <h2>💡 오늘의 슬로우 패션 추천 </h2>
         <div id="recommend-result"></div>
         <button class="menu-btn" style="margin-top: 20px;" onclick="switchScreen('main-screen')">나가기 (메인으로)</button>
     </div>
@@ -264,4 +265,99 @@
     }
 
     function renderWardrobe() {
-        const listEl = document
+        const listEl = document.getElementById('wardrobe-list');
+        listEl.innerHTML = '';
+
+        if (Object.keys(wardrobe).length === 0) {
+            listEl.innerHTML = '<li style="justify-content: center; color: #888;">옷장이 텅 비어있습니다.</li>';
+            return;
+        }
+
+        for (let name in wardrobe) {
+            let item = wardrobe[name];
+            let days = getDaysNotWorn(item.date);
+            let dayText = days <= 0 ? "오늘 입음!" : `${days}일 동안 안 입음`;
+            
+            let li = document.createElement('li');
+            li.innerHTML = `
+                <div class="item-info">
+                    <strong>${name}</strong> <br>
+                    <small>누적 착용: ${item.count}회 | 최근: ${item.date} (${dayText})</small>
+                </div>
+                <button class="delete-btn" onclick="removeClothes('${name}')">제거</button>
+            `;
+            listEl.appendChild(li);
+        }
+    }
+
+    function showRecommendation() {
+        const resultEl = document.getElementById('recommend-result');
+        resultEl.innerHTML = '';
+
+        if (Object.keys(wardrobe).length === 0) {
+            resultEl.innerHTML = '<p style="text-align:center; color:#888;">옷장이 비어있어 추천할 옷이 없습니다.</p>';
+            return;
+        }
+
+        let itemList = [];
+        for (let name in wardrobe) {
+            itemList.push({
+                name: name,
+                days: getDaysNotWorn(wardrobe[name].date)
+            });
+        }
+
+        itemList.sort((a, b) => b.days - a.days);
+        let itemsToRecommend = itemList.slice(0, 2);
+
+        itemsToRecommend.forEach((item, index) => {
+            let box = document.createElement('div');
+            box.className = 'recommend-box';
+            box.innerHTML = `
+                <span class="badge">추천 0${index + 1}</span>
+                <h3>👕 아이템: '${item.name}'</h3>
+                <p>이유: 마지막으로 입은 지 <strong>${item.days}일</strong> 지났습니다.</p>
+                <p style="color: #27ae60; font-weight: bold;">오래 쉬고 있는 이 옷을 입어주세요!</p>
+            `;
+            resultEl.appendChild(box);
+        });
+    }
+
+    function renderWearList() {
+        const listEl = document.getElementById('wear-list');
+        listEl.innerHTML = '';
+
+        if (Object.keys(wardrobe).length === 0) {
+            listEl.innerHTML = '<li style="justify-content: center; color: #888;">옷장이 비어있습니다.</li>';
+            return;
+        }
+
+        for (let name in wardrobe) {
+            let item = wardrobe[name];
+            let li = document.createElement('li');
+            li.style.cursor = 'pointer';
+            li.onclick = () => wearClothes(name);
+            li.innerHTML = `
+                <div class="item-info">
+                    <strong>${name}</strong> (현재 ${item.count}회 착용)
+                </div>
+                <span style="color: #27ae60; font-weight: bold;">[선택]</span>
+            `;
+            listEl.appendChild(li);
+        }
+    }
+
+    function wearClothes(name) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        wardrobe[name].date = todayStr;
+        wardrobe[name].count += 1;
+        saveToStorage();
+        alert(`✨ 멋지네요! 오늘 '${name}'을(를) 입었습니다.\n(마지막 착용일 갱신 및 착용 횟수 ${wardrobe[name].count}회로 증가)`);
+        switchScreen('main-screen');
+    }
+
+    updateEcoScore();
+</script>
+
+</body>
+</html>
