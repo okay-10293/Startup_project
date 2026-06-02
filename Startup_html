@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>슬로우 패션 옷장</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .screen {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+        .score-box {
+            background-color: #e8f5e9;
+            border: 2px solid #81c784;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #2e7d32;
+        }
+        .score-warning {
+            color: #d32f2f;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 1.1rem;
+            background-color: #34495e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .menu-btn:hover {
+            background-color: #2c3e50;
+        }
+        .menu-btn.accent {
+            background-color: #27ae60;
+        }
+        .menu-btn.accent:hover {
+            background-color: #219653;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="date"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+        .item-list li {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid #bdc3c7;
+        }
+        .item-info {
+            flex-grow: 1;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        .recommend-box {
+            background-color: #fffde7;
+            border: 2px dashed #fbc02d;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 15px;
+        }
+        .badge {
+            background-color: #e67e22;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="main-screen" class="screen active">
+        <h1>🌍 슬로우 패션</h1>
+        <div class="score-box">
+            🌱 현재 나의 환경 점수: <span id="eco-score">100</span> / 100점
+            <div id="warning-msg" class="score-warning">⚠️ 장기간 입지 않은 옷이 있어 점수가 누적 감점되었습니다!</div>
+        </div>
+        <button class="menu-btn" onclick="switchScreen('wardrobe-screen'); renderWardrobe();">1. 옷장 들어가기</button>
+        <button class="menu-btn" onclick="switchScreen('recommend-screen'); showRecommendation();">2. 오늘 입을 옷 추천받기</button>
+        <button class="menu-btn" onclick="switchScreen('wear-screen'); renderWearList();">3. 옷 입기 (기록하기)</button>
+    </div>
+
+    <div id="wardrobe-screen" class="screen">
+        <h2>🚪 내 옷장 관리</h2>
+        
+        <div style="background: #f1f2f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h3>➕ 새로운 옷 추가</h3>
+            <div class="form-group">
+                <label>옷 이름</label>
+                <input type="text" id="add-name" placeholder="예: 흰 티셔츠">
+            </div>
+            <div class="form-group">
+                <label>마지막으로 입은 날짜</label>
+                <input type="date" id="add-date">
+            </div>
+            <div class="form-group">
+                <label>누적 착용 횟수</label>
+                <input type="number" id="add-count" min="0" value="0">
+            </div>
+            <button class="menu-btn accent" onclick="addClothes()">옷장에 추가하기</button>
+        </div>
+
+        <h3>👕 옷장 목록 (제거 가능)</h3>
+        <ul id="wardrobe-list" class="item-list"></ul>
+
+        <button class="menu-btn" onclick="switchScreen('main-screen')">나가기 (메인으로)</button>
+    </div>
+
+    <div id="recommend-screen" class="screen">
+        <h2>💡 오늘의 슬로우 패션 추천 (최대 2벌)</h2>
+        <div id="recommend-result"></div>
+        <button class="menu-btn" style="margin-top: 20px;" onclick="switchScreen('main-screen')">나가기 (메인으로)</button>
+    </div>
+
+    <div id="wear-screen" class="screen">
+        <h2>✨ 어떤 옷을 입으셨나요?</h2>
+        <p style="text-align: center; color: #666;">선택한 옷의 착용일이 오늘로 변경되고 횟수가 1회 추가됩니다.</p>
+        <ul id="wear-list" class="item-list"></ul>
+        <button class="menu-btn" onclick="switchScreen('main-screen')">나가기 (메인으로)</button>
+    </div>
+</div>
+
+<script>
+    let wardrobe = JSON.parse(localStorage.getItem('wardrobe')) || {};
+
+    function saveToStorage() {
+        localStorage.setItem('wardrobe', JSON.stringify(wardrobe));
+        updateEcoScore();
+    }
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        if(screenId === 'main-screen') updateEcoScore();
+    }
+
+    function getDaysNotWorn(dateString) {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const lastWorn = new Date(dateString);
+        lastWorn.setHours(0,0,0,0);
+        
+        const diffTime = today - lastWorn;
+        return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function updateEcoScore() {
+        let score = 100;
+        let hasPenalty = false;
+
+        for (let name in wardrobe) {
+            let days = getDaysNotWorn(wardrobe[name].date);
+            if (days >= 30) {
+                hasPenalty = true;
+                let extraDays = days - 30;
+                let penalty = 5 + Math.floor(extraDays / 10);
+                score -= penalty;
+            }
+        }
+        score = Math.max(0, score);
+
+        document.getElementById('eco-score').innerText = score;
+        document.getElementById('warning-msg').style.display = hasPenalty && score < 100 ? 'block' : 'none';
+    }
+
+    function addClothes() {
+        const name = document.getElementById('add-name').value.trim();
+        const date = document.getElementById('add-date').value;
+        const count = parseInt(document.getElementById('add-count').value);
+
+        if (!name || !date || isNaN(count) || count < 0) {
+            alert("❌ 모든 항목을 올바르게 입력해주세요!");
+            return;
+        }
+
+        if (wardrobe[name]) {
+            alert("❌ 이미 옷장에 있는 옷 이름입니다.");
+            return;
+        }
+
+        wardrobe[name] = { date: date, count: count };
+        saveToStorage();
+        renderWardrobe();
+
+        document.getElementById('add-name').value = '';
+        document.getElementById('add-date').value = '';
+        document.getElementById('add-count').value = '0';
+        alert(`✅ '${name}'이(가) 추가되었습니다!`);
+    }
+
+    function removeClothes(name) {
+        if (confirm(`🗑️ '${name}'을(를) 정말 옷장에서 제거하시겠습니까?`)) {
+            delete wardrobe[name];
+            saveToStorage();
+            renderWardrobe();
+        }
+    }
+
+    function renderWardrobe() {
+        const listEl = document
